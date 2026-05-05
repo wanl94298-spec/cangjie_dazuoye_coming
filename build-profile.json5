@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\lmx17\\.ohos\\config\\default_cangjie_dazuoye_try_r23Bc3GLy8TdMzCCcmeAw_8EqZbN7w-fSFMpMQZ4alU=.cer",
+          "certpath": "C:\\Users\\LiJT\\.ohos\\config\\default_cangjie_dazuoye_coming0_PSseJfyNvcBEv4fjkzOIgu_B2Z5tq55gGLnrRckGS-M=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B1D5C58382F8CD77D94695514698AEA63D5AC168FA6C536F9E1F4D65C86028ED107BBE7961EA0FF",
-          "profile": "C:\\Users\\lmx17\\.ohos\\config\\default_cangjie_dazuoye_try_r23Bc3GLy8TdMzCCcmeAw_8EqZbN7w-fSFMpMQZ4alU=.p7b",
+          "keyPassword": "0000001BFCC82B39552DAEE28F9D4E5F001F58073E7B680C4175E2758513A0320804BFAE238C41D976210A",
+          "profile": "C:\\Users\\LiJT\\.ohos\\config\\default_cangjie_dazuoye_coming0_PSseJfyNvcBEv4fjkzOIgu_B2Z5tq55gGLnrRckGS-M=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\lmx17\\.ohos\\config\\default_cangjie_dazuoye_try_r23Bc3GLy8TdMzCCcmeAw_8EqZbN7w-fSFMpMQZ4alU=.p12",
-          "storePassword": "0000001BE9EFD9D62B50FC93362DB93B4735169F741515B76DE85FF73B63238FA0756DABACD0370FB947CE"
+          "storeFile": "C:\\Users\\LiJT\\.ohos\\config\\default_cangjie_dazuoye_coming0_PSseJfyNvcBEv4fjkzOIgu_B2Z5tq55gGLnrRckGS-M=.p12",
+          "storePassword": "0000001B9B666CE1D56AA81153C8638D894A3E59530B46995F10665EBEBB74C5A1693C0746E51C66635D18"
         }
       }
     ],

@@ -2,6 +2,7 @@ package ohos_app_cangjie_entry
 
 import kit.ArkUI.*
 import ohos.arkui.state_macro_manage.*
+import ohos.arkui.state_management.*
 
 @Component
 class SettingsPage {
@@ -18,10 +19,12 @@ class SettingsPage {
     @State
     var isChecking: Bool = false
 
+    func tr(zh: String, en: String): String { if (this.currentLang == "zh") { zh } else { en } }
+
     func build() {
         Scroll() {
             Column {
-                Text("设置")
+                Text(this.tr("设置", "Settings"))
                     .fontSize(22)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(0xFF1D1D1F)
@@ -47,9 +50,9 @@ class SettingsPage {
     @Builder
     func buildHealthBlock() {
         Column {
-            Text("连通性").fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
+            Text(this.tr("连通性", "Connectivity")).fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
 
-            Text("检测 Web 服务与 ComfyUI（服务端转发）。").fontSize(14).fontColor(0xFF86868B).margin(bottom: 12)
+            Text(this.tr("检测 Web 服务与 ComfyUI（服务端转发）。", "Check the Web service and ComfyUI through the server.")).fontSize(14).fontColor(0xFF86868B).margin(bottom: 12)
 
             Button(this.getHealthCheckButtonLabel())
                 .shape(ButtonType.Capsule)
@@ -89,7 +92,7 @@ class SettingsPage {
     @Builder
     func buildVersionBlock() {
         Column {
-            Text("版本信息").fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
+            Text(this.tr("版本信息", "Version")).fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
 
             Text(this.versionInfo)
                 .fontSize(13)
@@ -114,9 +117,9 @@ class SettingsPage {
     @Builder
     func buildArchBlock() {
         Column {
-            Text("架构说明").fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
+            Text(this.tr("架构说明", "Architecture")).fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
 
-            Text("鸿蒙客户端通过 HTTP 请求 Node 服务端；ComfyUI 由服务端连接，与 Web 端对齐同一套 REST/SSE 接口契约。")
+            Text(this.tr("鸿蒙客户端通过 HTTP 请求 Node 服务端；ComfyUI 由服务端连接，与 Web 端对齐同一套 REST/SSE 接口契约。", "The HarmonyOS client calls the Node service by HTTP. ComfyUI is connected server-side, using the same REST/SSE contract as the Web client."))
                 .fontSize(14)
                 .fontColor(0xFF86868B)
                 .lineHeight(22)
@@ -135,14 +138,9 @@ class SettingsPage {
     @Builder
     func buildDataBlock() {
         Column {
-            Text("本地数据").fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
+            Text(this.tr("本地数据", "Local data")).fontSize(17).fontWeight(FontWeight.Bold).fontColor(0xFF1D1D1F).margin(bottom: 8)
 
-            Text("演示兜底：GPU 不可用时，用历史记录回看已成功输出。")
-                .fontSize(14)
-                .fontColor(0xFF86868B)
-                .margin(bottom: 12)
-
-            Button("清空全部历史")
+            Button(this.tr("清空全部历史", "Clear all history"))
                 .shape(ButtonType.Capsule)
                 .height(40)
                 .backgroundColor(0xE6FFFFFF)
@@ -152,7 +150,7 @@ class SettingsPage {
                 .borderWidth(1)
                 .borderColor(0x99FF3B30)
                 .onClick({
-                    _: ClickEvent =>
+                    _: ClickEvent => this.handleClearHistory()
                 })
         }
             .width(100.percent)
@@ -168,9 +166,9 @@ class SettingsPage {
 
     func getHealthCheckButtonLabel(): String {
         if (this.isChecking) {
-            return "检查中..."
+            return this.tr("检查中...", "Checking...")
         } else {
-            return "执行健康检查"
+            return this.tr("执行健康检查", "Run health check")
         }
     }
 
@@ -206,5 +204,10 @@ class SettingsPage {
                     this.isChecking = false
             }
         )
+    }
+
+    func handleClearHistory() {
+        AppStorage.setOrCreate("imageForgeHistoryLines", "")
+        this.healthStatus = this.tr("历史记录已清空", "History cleared")
     }
 }

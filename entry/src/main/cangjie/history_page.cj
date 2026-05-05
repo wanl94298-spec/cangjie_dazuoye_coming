@@ -21,6 +21,8 @@ class HistoryPage {
     @State
     var refreshNonce: Int64 = 0
 
+    func tr(zh: String, en: String): String { if (this.currentLang == "zh") { zh } else { en } }
+
     func historyLines(): Array<String> {
         let _ = this.refreshNonce
         let _ = this.historyBlob.size
@@ -52,14 +54,14 @@ class HistoryPage {
         Stack(alignContent: Alignment.TopStart) {
             Column {
                 Row {
-                    Text("历史记录")
+                    Text(this.tr("历史记录", "History"))
                         .fontSize(22)
                         .fontWeight(FontWeight.Bold)
                         .fontColor(0xFF1D1D1F)
 
                     Blank()
 
-                    Button("刷新")
+                    Button(this.tr("刷新", "Refresh"))
                         .shape(ButtonType.Capsule)
                         .height(32)
                         .fontSize(13)
@@ -70,7 +72,7 @@ class HistoryPage {
                         .margin(right: 12)
                         .onClick({ _: ClickEvent => this.refreshNonce += 1 })
 
-                    Text("仅保存在本设备").fontSize(12).fontColor(0xFF86868B)
+                    Text(this.tr("仅保存在本设备", "Stored on this device only")).fontSize(12).fontColor(0xFF86868B)
                 }
                 .width(100.percent)
                 .padding(top: 16, bottom: 12)
@@ -109,11 +111,7 @@ class HistoryPage {
                 .onClick({ _: ClickEvent => this.closePreview() })
 
             Column {
-                Text(if (this.currentLang == "zh") {
-                    "预览"
-                } else {
-                    "Preview"
-                })
+                Text(this.tr("预览", "Preview"))
                     .fontSize(16)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(0xFFFFFFFF)
@@ -124,11 +122,7 @@ class HistoryPage {
                     .height(460)
                     .objectFit(ImageFit.Contain)
 
-                Button(if (this.currentLang == "zh") {
-                    "关闭"
-                } else {
-                    "Close"
-                })
+                Button(this.tr("关闭", "Close"))
                     .shape(ButtonType.Capsule)
                     .margin(top: 18)
                     .fontSize(14)
@@ -149,11 +143,11 @@ class HistoryPage {
         Column {
             Blank().height(80)
 
-            Text("暂无已完成任务")
+            Text(this.tr("暂无已完成任务", "No completed tasks yet"))
                 .fontSize(16)
                 .fontColor(0xFF86868B)
 
-            Text("完成图片编辑或生成后，结果会自动保存在此处")
+            Text(this.tr("完成图片编辑或生成后，结果会自动保存在此处", "Completed edits or generations will be saved here"))
                 .fontSize(13)
                 .fontColor(0xFFAEAEB2)
                 .margin(top: 8)
@@ -179,11 +173,7 @@ class HistoryPage {
                                 .margin(right: 14)
                         } else {
                             Column {
-                                Text(if (this.currentLang == "zh") {
-                                    "无图"
-                                } else {
-                                    "No img"
-                                })
+                                Text(this.tr("无图", "No img"))
                                     .fontSize(12)
                                     .fontColor(0xFFAEAEB2)
                             }
@@ -199,10 +189,8 @@ class HistoryPage {
                         Column {
                             Text(if (!this.parsedRow(line).cardTitle.isEmpty()) {
                                 this.parsedRow(line).cardTitle
-                            } else if (this.currentLang == "zh") {
-                                "任务记录"
                             } else {
-                                "Task"
+                                this.tr("任务记录", "Task")
                             })
                                 .fontSize(15)
                                 .fontWeight(FontWeight.Medium)

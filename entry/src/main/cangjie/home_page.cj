@@ -10,36 +10,9 @@ class HomePage {
     @Prop var hMarginVp: Float64
     @Prop var bottomBarOverlapVp: Float64
     @State var scrollY: Float64 = 0.0
-    var onNavigateTab: (Int32) -> Unit = { _: Int32 => }
     var onOpenEditor: (String, String) -> Unit = { _: String, _: String => }
 
-    func getStartEditLabel(): String {
-        if (this.currentLang == "zh") {
-            "开始编辑图片"
-        } else {
-            "Start editing"
-        }
-    }
-
-    func getStartGenerateLabel(): String {
-        if (this.currentLang == "zh") {
-            "开始生成图片"
-        } else {
-            "Start generating"
-        }
-    }
-
-    func heroTitle(): String {
-        "ImageForge"
-    }
-
-    func heroSubtitle(): String {
-        if (this.currentLang == "zh") {
-            "AI 驱动的图片编辑与合成"
-        } else {
-            "AI image editing & composition"
-        }
-    }
+    func tr(zh: String, en: String): String { if (this.currentLang == "zh") { zh } else { en } }
 
     func blurMix(a: Float64, b: Float64, lim: Float64): Float64 {
         let r = a / b
@@ -55,13 +28,13 @@ class HomePage {
             Column {
                 Blank().height(6)
 
-                Text(this.heroTitle())
+                Text("ImageForge")
                     .fontSize(30)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(0xFF141820)
                     .margin(bottom: 6)
 
-                Text(this.heroSubtitle())
+                Text(this.tr("AI 驱动的图片编辑与合成", "AI image editing & composition"))
                     .fontSize(15)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(0xFF5C6670)
@@ -96,22 +69,22 @@ class HomePage {
     func buildFeatureCards() {
         Column {
             Row {
-                this.buildGlassCard("风格化修图", "自然语言编辑 · Flux2", {
+                this.buildGlassCard(this.tr("风格化修图", "Stylized edit"), this.tr("自然语言编辑 · Flux2", "Natural language edit · Flux2"), {
                     => this.onOpenEditor("edit", "style")
                 })
                 Blank().width(12)
-                this.buildGlassCard("高清增强", "lanczos · 更高清细节", {
+                this.buildGlassCard(this.tr("高清增强", "HD enhance"), this.tr("lanczos · 更高清细节", "lanczos · more details"), {
                     => this.onOpenEditor("edit", "upscale")
                 })
             }
             .width(100.percent)
 
             Row {
-                this.buildGlassCard("背景重绘", "CFG 与步数适配图景", {
+                this.buildGlassCard(this.tr("背景重绘", "Background repaint"), this.tr("CFG 与步数适配图景", "CFG and steps tuned for scenes"), {
                     => this.onOpenEditor("edit", "background")
                 })
                 Blank().width(12)
-                this.buildGlassCard("文生图", "文字描述生成全新图像", {
+                this.buildGlassCard(this.tr("文生图", "Text to image"), this.tr("文字描述生成全新图像", "Generate new images from text"), {
                     => this.onOpenEditor("generate", "style")
                 })
             }
@@ -159,17 +132,13 @@ class HomePage {
     @Builder
     func buildQuickActions() {
         Column {
-            Text(if (this.currentLang == "zh") {
-                "快速开始"
-            } else {
-                "Quick start"
-            })
+            Text(this.tr("快速开始", "Quick start"))
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(0xFF1A2430)
                 .margin(bottom: 14)
 
-            Button(this.getStartEditLabel())
+            Button(this.tr("开始编辑图片", "Start editing"))
                 .shape(ButtonType.Capsule)
                 .width(100.percent)
                 .height(50)
@@ -188,7 +157,7 @@ class HomePage {
                     this.onOpenEditor("edit", "style")
                 })
 
-            Button(this.getStartGenerateLabel())
+            Button(this.tr("开始生成图片", "Start generating"))
                 .shape(ButtonType.Capsule)
                 .width(100.percent)
                 .height(50)
