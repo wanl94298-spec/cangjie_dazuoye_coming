@@ -1,0 +1,10 @@
+{
+  "templateId": "image_upscale",
+  "description": "服务端 buildEditWorkflow：ImageScaleToTotalPixels 使用 lanczos + 更高 megapixels，Flux2Scheduler 提高 steps；与仅改提示词不同。",
+  "comfy": {
+    "ImageScaleToTotalPixels": { "node": "75:80", "megapixels": 2.25, "upscale_method": "lanczos" },
+    "Flux2Scheduler": { "node": "75:62", "steps": 12 },
+    "SaveImage": { "node": "9", "filename_prefix": "if-upscale" }
+  },
+  "overrideFile": "edit_variants.json"
+}

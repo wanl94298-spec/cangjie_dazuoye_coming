@@ -1,0 +1,9 @@
+{
+  "name": "imageforge-web",
+  "version": "1.0.0",
+  "role": "imageforge-web-bff",
+  "comfyuiUrl": "http://127.0.0.1:8188",
+  "hint": "Web 仅请求本服务；ComfyUI 由服务端转发。鸿蒙端可对齐同一 REST/SSE 契约。",
+  "_staticFallback": true,
+  "_writtenAt": "2026-04-30T06:10:10.773Z"
+}

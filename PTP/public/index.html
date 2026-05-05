@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#f5f5f7">
+    <meta name="color-scheme" content="light">
+    <meta name="format-detection" content="telephone=no">
+    <!-- 若页面不是通过 node server.js 同一端口打开（例如单独静态托管），填写 BFF 根 URL，例如 http://127.0.0.1:38024 -->
+    <meta name="ptp-api-base" content="">
+    <title>ImageForge Web</title>
+    <link rel="stylesheet" href="phosphor-bold.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="forge.css">
+</head>
+<body>
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-modal">
+            <h2 data-i18n="auth.title">Access Code Required</h2>
+            <p data-i18n="auth.description">Enter the beta access code to continue</p>
+            <input type="password" id="accessCode" data-i18n-placeholder="auth.placeholder" placeholder="Enter access code" autocomplete="off">
+            <button class="btn-primary" id="submitCode">
+                <span class="btn-text" data-i18n="auth.submit">Submit</span>
+            </button>
+            <div class="error-message hidden" id="errorMessage" data-i18n="auth.error">Invalid access code</div>
+        </div>
+    </div>
+
+    <div class="custom-alert-overlay hidden" id="customAlertOverlay">
+        <div class="custom-alert">
+            <div class="custom-alert-content" id="customAlertContent"></div>
+            <button class="btn-primary" id="customAlertBtn">
+                <span class="btn-text">OK</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="history-modal hidden">
+        <div class="history-modal-inner">
+            <h3 data-i18n="history.detailTitle">任务详情</h3>
+            <div id="historyModalMeta" class="result-meta" style="margin-top:12px;"></div>
+            <div class="compare-box" id="historyModalCompare" style="margin-top:12px;">
+                <div class="compare-columns">
+                    <div class="compare-col">
+                        <span data-i18n="compare.before">原图</span>
+                        <img id="historyModalBefore" alt="" />
+                    </div>
+                    <div class="compare-col">
+                        <span data-i18n="compare.after">结果</span>
+                        <img id="historyModalAfter" alt="" />
+                    </div>
+                </div>
+            </div>
+            <div class="history-modal-actions">
+                <button type="button" class="btn-primary" id="historyModalOpenEditor" data-i18n="history.openEditor">在创作中打开</button>
+                <button type="button" id="historyModalClose" data-i18n="history.close">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 data-i18n="title">ImageForge</h1>
+            <div class="header-actions">
+                <button class="lang-switch" id="langSwitch">
+                    <span class="lang-text">中文</span>
+                </button>
+                <div class="user-info hidden" id="userInfo">
+                    <div class="user-badge">
+                        <span class="user-name" id="userName">User</span>
+                        <span class="user-plan" id="userPlan">Free</span>
+                    </div>
+                    <div class="credits-badge">
+                        <i class="ph-bold ph-lightning"></i>
+                        <span class="credits-count" id="creditsCount">0</span>
+                    </div>
+                </div>
+                <div class="status" id="status">
+                    <span class="dot"></span>
+                    <span class="text" data-i18n="status.checking">Checking...</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="forge-nav" id="forgeNav">
+            <button type="button" class="active" data-page="home" data-i18n="nav.home">首页</button>
+            <button type="button" data-page="editor" data-i18n="nav.editor">创作</button>
+            <button type="button" data-page="history" data-i18n="nav.history">历史</button>
+            <button type="button" data-page="settings" data-i18n="nav.settings">设置</button>
+        </nav>
+
+        <div id="pageHome" class="forge-page">
+            <div class="home-cards">
+                <button type="button" class="home-card" data-open="editor" data-task="style">
+                    <span class="hc-title" data-i18n="home.card.style.title">风格化修图</span>
+                    <span class="hc-desc" data-i18n="home.card.style.desc">自然语言编辑，模板化 Flux2 工作流</span>
+                </button>
+                <button type="button" class="home-card" data-open="editor" data-task="upscale">
+                    <span class="hc-title" data-i18n="home.card.upscale.title">高清增强</span>
+                    <span class="hc-desc" data-i18n="home.card.upscale.desc">ComfyUI：lanczos + 更高像素与 12 步</span>
+                </button>
+                <button type="button" class="home-card" data-open="editor" data-task="background">
+                    <span class="hc-title" data-i18n="home.card.bg.title">背景重绘</span>
+                    <span class="hc-desc" data-i18n="home.card.bg.desc">ComfyUI：提高 CFG + 8 步，配合背景提示</span>
+                </button>
+                <button type="button" class="home-card" data-open="history">
+                    <span class="hc-title" data-i18n="home.card.history.title">历史记录</span>
+                    <span class="hc-desc" data-i18n="home.card.history.desc">本机保存的成功任务，可离线回看</span>
+                </button>
+                <button type="button" class="home-card" data-open="settings">
+                    <span class="hc-title" data-i18n="home.card.settings.title">服务设置</span>
+                    <span class="hc-desc" data-i18n="home.card.settings.desc">健康检查与版本信息</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="pageEditor" class="forge-page hidden">
+            <div class="mode-tabs">
+                <button class="tab-btn active" data-mode="edit" data-i18n="tabs.edit">Edit Image</button>
+                <button class="tab-btn" data-mode="generate" data-i18n="tabs.generate">Generate Image</button>
+            </div>
+
+            <main>
+                <div class="mode-content active" id="editMode">
+                    <div id="editModeBanner" class="edit-mode-banner" role="status"></div>
+                    <section class="upload-section">
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="fileInput" accept="image/*" hidden>
+                            <div class="upload-content">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <p data-i18n="edit.upload">Click to upload or drag image here</p>
+                                <span class="hint" data-i18n="edit.hint">JPG, PNG, WEBP · Max 20MB</span>
+                            </div>
+                        </div>
+
+                        <div class="preview-area hidden" id="previewArea">
+                            <img id="previewImage" alt="Preview">
+                            <button class="btn-text" id="removeBtn" data-i18n="edit.remove">Remove</button>
+                        </div>
+                    </section>
+
+                    <div class="sample-row">
+                        <span class="sample-label" data-i18n="edit.samples">Sample images</span>
+                        <button type="button" class="sample-btn" data-sample="warm" data-i18n="edit.sampleWarm">Warm tone</button>
+                        <button type="button" class="sample-btn" data-sample="cool" data-i18n="edit.sampleCool">Cool tone</button>
+                        <button type="button" class="sample-btn" data-sample="neutral" data-i18n="edit.sampleNeutral">Neutral gray</button>
+                    </div>
+
+                    <section class="prompt-section">
+                        <label for="promptInput" data-i18n="edit.label">Edit Instructions</label>
+                        <textarea
+                            id="promptInput"
+                            data-i18n-placeholder="edit.placeholder"
+                            placeholder="Describe edits..."
+                            rows="6"
+                        ></textarea>
+                        <label for="negativePrompt" data-i18n="edit.negativeLabel" style="margin-top:12px;display:block;">Exclude (optional)</label>
+                        <textarea id="negativePrompt" rows="2" data-i18n-placeholder="edit.negativePlaceholder" placeholder="Things to avoid..."></textarea>
+                        <p class="neg-hint" data-i18n="edit.negativeHint">Merged into prompt as an exclusion hint for the model.</p>
+                    </section>
+
+                    <div class="edit-preset-bar" id="editPresetBar"></div>
+
+                    <section class="action-section">
+                        <button class="btn-primary" id="editBtn" disabled>
+                            <span class="btn-text">
+                                <span data-i18n="edit.button">Edit Image</span>
+                                <span class="btn-credit hidden" id="editBtnCredit">~ 2 credits</span>
+                            </span>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span>
+                                <span data-i18n="edit.processing">Processing...</span>
+                            </span>
+                        </button>
+                    </section>
+                </div>
+
+                <div class="mode-content" id="generateMode">
+                    <section class="prompt-section">
+                        <label for="generatePrompt" data-i18n="generate.label">Image Description</label>
+                        <textarea
+                            id="generatePrompt"
+                            data-i18n-placeholder="generate.placeholder"
+                            placeholder="Describe the image..."
+                            rows="6"
+                        ></textarea>
+
+                        <div class="prompt-templates">
+                            <button class="template-btn" data-template="selfie"><i class="ph-bold ph-camera"></i><span class="template-text" data-i18n="generate.template.selfie">Casual Selfie</span></button>
+                            <button class="template-btn" data-template="desk"><i class="ph-bold ph-desktop"></i><span class="template-text" data-i18n="generate.template.desk">Office Desk</span></button>
+                            <button class="template-btn" data-template="coffee"><i class="ph-bold ph-coffee"></i><span class="template-text" data-i18n="generate.template.coffee">Coffee Table</span></button>
+                            <button class="template-btn" data-template="kitchen"><i class="ph-bold ph-cooking-pot"></i><span class="template-text" data-i18n="generate.template.kitchen">Kitchen</span></button>
+                            <button class="template-btn" data-template="bedroom"><i class="ph-bold ph-bed"></i><span class="template-text" data-i18n="generate.template.bedroom">Bedroom</span></button>
+                            <button class="template-btn" data-template="outdoor"><i class="ph-bold ph-tent"></i><span class="template-text" data-i18n="generate.template.outdoor">Outdoor</span></button>
+                            <button class="template-btn" data-template="luxury"><i class="ph-bold ph-diamond"></i><span class="template-text" data-i18n="generate.template.luxury">Luxury</span></button>
+                            <button class="template-btn" data-template="portrait"><i class="ph-bold ph-user-circle"></i><span class="template-text" data-i18n="generate.template.portrait">Portrait</span></button>
+                            <button class="template-btn" data-template="nature"><i class="ph-bold ph-tree"></i><span class="template-text" data-i18n="generate.template.nature">Nature</span></button>
+                        </div>
+                    </section>
+
+                    <section class="params-section">
+                        <div class="param-group">
+                            <label for="widthInput" data-i18n="generate.width">Width</label>
+                            <input type="number" id="widthInput" value="1024" min="256" max="2048" step="64">
+                        </div>
+                        <div class="param-group">
+                            <label for="heightInput" data-i18n="generate.height">Height</label>
+                            <input type="number" id="heightInput" value="1024" min="256" max="2048" step="64">
+                        </div>
+                        <div class="param-group">
+                            <label for="stepsInput" data-i18n="generate.steps">Steps</label>
+                            <input type="number" id="stepsInput" value="4" min="1" max="50">
+                        </div>
+                        <div class="param-group">
+                            <label for="cfgInput" data-i18n="generate.cfg">CFG</label>
+                            <input type="number" id="cfgInput" value="1.0" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="param-group full-width">
+                            <label>
+                                <input type="checkbox" id="gridModeCheckbox">
+                                <span data-i18n="generate.gridMode">Grid Mode</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="action-section">
+                        <button class="btn-primary" id="generateBtn">
+                            <span class="btn-text">
+                                <span data-i18n="generate.button">Generate Image</span>
+                                <span class="btn-credit hidden" id="generateBtnCredit">~ 1 credits</span>
+                            </span>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span>
+                                <span data-i18n="generate.generating">Generating...</span>
+                            </span>
+                        </button>
+                    </section>
+                </div>
+
+                <section class="result-section hidden" id="resultSection">
+                    <div class="result-header">
+                        <h2 data-i18n="result.title">Result</h2>
+                        <button class="btn-text" id="downloadBtn">
+                            <span class="download-text" data-i18n="result.download">Download</span>
+                        </button>
+                    </div>
+                    <div class="result-meta hidden" id="resultMetaSummary"></div>
+                    <div class="compare-box hidden" id="compareBox">
+                        <div class="compare-columns">
+                            <div class="compare-col">
+                                <span data-i18n="compare.before">Before</span>
+                                <img id="compareImgBefore" alt="" />
+                            </div>
+                            <div class="compare-col">
+                                <span data-i18n="compare.after">After</span>
+                                <img id="compareImgAfter" alt="" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-image">
+                        <img id="resultImage" alt="Result" crossorigin="anonymous">
+                        <div class="loading-overlay hidden" id="loadingOverlay">
+                            <div class="progress-text">
+                                <span class="progress-number">0</span>%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button type="button" id="regenerateBtn" data-i18n="result.regenerate">Generate again</button>
+                        <button type="button" id="cancelTaskBtn" class="btn-cancel hidden" data-i18n="task.cancel">Cancel</button>
+                    </div>
+                </section>
+
+                <section class="plans-section hidden" id="plansSection">
+                    <h2 data-i18n="plans.title">Subscription Plans</h2>
+                    <div class="plans-grid" id="plansGrid"></div>
+                </section>
+            </main>
+        </div>
+
+        <div id="pageHistory" class="forge-page hidden">
+            <h2 data-i18n="history.title">History</h2>
+            <p class="neg-hint" data-i18n="history.hint">Stored in this browser only.</p>
+            <div id="historyList" class="history-list"></div>
+            <p id="historyEmpty" class="empty-hint hidden" data-i18n="history.empty">No completed tasks yet.</p>
+        </div>
+
+        <div id="pageSettings" class="forge-page hidden">
+            <div class="settings-block">
+                <h3 data-i18n="settings.healthTitle">Connectivity</h3>
+                <p data-i18n="settings.healthDesc">Checks this web backend and ComfyUI from the server.</p>
+                <div class="settings-actions">
+                    <button type="button" id="btnRefreshHealth" data-i18n="settings.refreshHealth">Run health check</button>
+                </div>
+                <pre id="settingsHealthOut">—</pre>
+            </div>
+            <div class="settings-block">
+                <h3 data-i18n="settings.versionTitle">Version</h3>
+                <pre id="settingsVersionOut">—</pre>
+            </div>
+            <div class="settings-block">
+                <h3 data-i18n="settings.archTitle">Architecture</h3>
+                <p data-i18n="settings.archBody">The browser only calls this Node service. ComfyUI is reached server-side (same contract as a future Harmony client).</p>
+            </div>
+            <div class="settings-block">
+                <h3 data-i18n="settings.demoTitle">Demo fallback</h3>
+                <p data-i18n="settings.demoBody">Use History to replay past successful outputs when the GPU is offline.</p>
+            </div>
+            <div class="settings-block">
+                <h3 data-i18n="settings.dataTitle">Local data</h3>
+                <div class="settings-actions">
+                    <button type="button" id="btnClearHistory" data-i18n="settings.clearHistory">Clear all history</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="site-footer-inner">
+            <nav class="site-footer-nav" aria-label="Legal">
+                <a href="terms.html" data-i18n="footer.terms">Terms of Service</a>
+                <span class="site-footer-sep" aria-hidden="true">·</span>
+                <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a>
+            </nav>
+            <p class="site-footer-icp" data-i18n="footer.icp">Operator: MatrixLabs · Contact: 24373054@buaa.edu.cn</p>
+            <p class="site-footer-icp">
+                <span id="footerMpsLink" class="mps-badge">
+                    <img class="mps-icon" src="assets/备案图标2.png" alt="" />
+                    <a href="https://beian.mps.gov.cn/#/query/webSearch?code=11010802046852" rel="noreferrer" target="_blank">京公网安备11010802046852号</a>
+                </span>
+            </p>
+            <p class="site-footer-meta">
+                <span data-i18n="footer.copyPrefix">©</span>
+                <span id="footerYear">2026</span>
+                <span data-i18n="footer.brand">ImageForge</span>
+                <span class="site-footer-sep" aria-hidden="true">·</span>
+                <span data-i18n="footer.tagline">Image editing & generation</span>
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

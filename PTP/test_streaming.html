@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            margin-bottom: 15px;
+            resize: vertical;
+        }
+        
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #333;
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .progress-container.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .status-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        
+        .log-entry.error {
+            color: #f48771;
+        }
+        
+        .log-entry.success {
+            color: #89d185;
+        }
+        
+        .log-entry.info {
+            color: #6cb6ff;
+        }
+        
+        .result-image {
+            margin-top: 20px;
+            max-width: 100%;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .result-image.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Streaming API Test</h1>
+        
+        <!-- T2I Test -->
+        <div class="test-section">
+            <h2>Text-to-Image (Streaming)</h2>
+            <textarea id="t2iPrompt" rows="3" placeholder="Enter your prompt...">A serene mountain landscape at dawn, misty valleys, golden sunlight piercing through clouds, photorealistic, 8k quality</textarea>
+            <button id="t2iBtn">Generate Image</button>
+            <button id="t2iClearBtn">Clear</button>
+            
+            <div class="progress-container" id="t2iProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="t2iProgressFill">0%</div>
+                </div>
+                <div class="status-text" id="t2iStatus">Initializing...</div>
+            </div>
+            
+            <img class="result-image" id="t2iResult" alt="Generated image">
+            
+            <div class="log" id="t2iLog"></div>
+        </div>
+        
+        <!-- I2I Test -->
+        <div class="test-section">
+            <h2>Image-to-Image (Streaming)</h2>
+            <input type="file" id="i2iFile" accept="image/*">
+            <textarea id="i2iPrompt" rows="3" placeholder="Enter edit instructions...">Replace the background with a sunset beach scene, keep the subject unchanged</textarea>
+            <button id="i2iBtn">Edit Image</button>
+            <button id="i2iClearBtn">Clear</button>
+            
+            <div class="progress-container" id="i2iProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="i2iProgressFill">0%</div>
+                </div>
+                <div class="status-text" id="i2iStatus">Initializing...</div>
+            </div>
+            
+            <img class="result-image" id="i2iResult" alt="Edited image">
+            
+            <div class="log" id="i2iLog"></div>
+        </div>
+    </div>
+    
+    <script>
+        const ACCESS_CODE = 'ptp2025'; // Change this to your access code
+        
+        // T2I Test
+        const t2iBtn = document.getElementById('t2iBtn');
+        const t2iClearBtn = document.getElementById('t2iClearBtn');
+        const t2iPrompt = document.getElementById('t2iPrompt');
+        const t2iProgress = document.getElementById('t2iProgress');
+        const t2iProgressFill = document.getElementById('t2iProgressFill');
+        const t2iStatus = document.getElementById('t2iStatus');
+        const t2iResult = document.getElementById('t2iResult');
+        const t2iLog = document.getElementById('t2iLog');
+        
+        // I2I Test
+        const i2iBtn = document.getElementById('i2iBtn');
+        const i2iClearBtn = document.getElementById('i2iClearBtn');
+        const i2iFile = document.getElementById('i2iFile');
+        const i2iPrompt = document.getElementById('i2iPrompt');
+        const i2iProgress = document.getElementById('i2iProgress');
+        const i2iProgressFill = document.getElementById('i2iProgressFill');
+        const i2iStatus = document.getElementById('i2iStatus');
+        const i2iResult = document.getElementById('i2iResult');
+        const i2iLog = document.getElementById('i2iLog');
+        
+        function addLog(logElement, message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateProgress(fillElement, statusElement, progress, message) {
+            fillElement.style.width = `${progress}%`;
+            fillElement.textContent = `${progress}%`;
+            statusElement.textContent = message || `Progress: ${progress}%`;
+        }
+        
+        async function testT2I() {
+            const prompt = t2iPrompt.value.trim();
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            t2iBtn.disabled = true;
+            t2iProgress.classList.add('active');
+            t2iResult.classList.remove('active');
+            t2iLog.innerHTML = '';
+            
+            addLog(t2iLog, 'Starting T2I generation...', 'info');
+            
+            try {
+                const response = await fetch('/api/generate-stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        width: 1024,
+                        height: 1024,
+                        steps: 4,
+                        cfg: 1.0,
+                        accessCode: ACCESS_CODE
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const event = JSON.parse(line.slice(6));
+                            
+                            addLog(t2iLog, `Status: ${event.status} | Progress: ${event.progress}% | ${event.message || ''}`, 'info');
+                            
+                            if (event.progress !== undefined) {
+                                updateProgress(t2iProgressFill, t2iStatus, event.progress, event.message || event.status);
+                            }
+                            
+                            if (event.status === 'completed' && event.result) {
+                                addLog(t2iLog, 'Generation completed!', 'success');
+                                addLog(t2iLog, `Image: ${event.result.image}`, 'success');
+                                addLog(t2iLog, `Credits used: ${event.result.creditsUsed}`, 'info');
+                                addLog(t2iLog, `Credits remaining: ${event.result.creditsRemaining}`, 'info');
+                                
+                                t2iResult.src = event.result.thumbnail || event.result.image;
+                                t2iResult.classList.add('active');
+                            }
+                            
+                            if (event.status === 'error') {
+                                throw new Error(event.error);
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                addLog(t2iLog, `Error: ${error.message}`, 'error');
+                updateProgress(t2iProgressFill, t2iStatus, 0, 'Failed');
+            } finally {
+                t2iBtn.disabled = false;
+            }
+        }
+        
+        async function testI2I() {
+            const file = i2iFile.files[0];
+            const prompt = i2iPrompt.value.trim();
+            
+            if (!file) {
+                alert('Please select an image');
+                return;
+            }
+            
+            if (!prompt) {
+                alert('Please enter edit instructions');
+                return;
+            }
+            
+            i2iBtn.disabled = true;
+            i2iProgress.classList.add('active');
+            i2iResult.classList.remove('active');
+            i2iLog.innerHTML = '';
+            
+            addLog(i2iLog, 'Starting I2I editing...', 'info');
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('prompt', prompt);
+                formData.append('accessCode', ACCESS_CODE);
+                
+                const response = await fetch('/api/edit-stream', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const event = JSON.parse(line.slice(6));
+                            
+                            addLog(i2iLog, `Status: ${event.status} | Progress: ${event.progress}% | ${event.message || ''}`, 'info');
+                            
+                            if (event.progress !== undefined) {
+                                updateProgress(i2iProgressFill, i2iStatus, event.progress, event.message || event.status);
+                            }
+                            
+                            if (event.status === 'completed' && event.result) {
+                                addLog(i2iLog, 'Editing completed!', 'success');
+                                addLog(i2iLog, `Image: ${event.result.image}`, 'success');
+                                addLog(i2iLog, `Credits used: ${event.result.creditsUsed}`, 'info');
+                                addLog(i2iLog, `Credits remaining: ${event.result.creditsRemaining}`, 'info');
+                                
+                                i2iResult.src = event.result.thumbnail || event.result.image;
+                                i2iResult.classList.add('active');
+                            }
+                            
+                            if (event.status === 'error') {
+                                throw new Error(event.error);
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                addLog(i2iLog, `Error: ${error.message}`, 'error');
+                updateProgress(i2iProgressFill, i2iStatus, 0, 'Failed');
+            } finally {
+                i2iBtn.disabled = false;
+            }
+        }
+        
+        t2iBtn.addEventListener('click', testT2I);
+        i2iBtn.addEventListener('click', testI2I);
+        
+        t2iClearBtn.addEventListener('click', () => {
+            t2iLog.innerHTML = '';
+            t2iProgress.classList.remove('active');
+            t2iResult.classList.remove('active');
+            updateProgress(t2iProgressFill, t2iStatus, 0, 'Ready');
+        });
+        
+        i2iClearBtn.addEventListener('click', () => {
+            i2iLog.innerHTML = '';
+            i2iProgress.classList.remove('active');
+            i2iResult.classList.remove('active');
+            updateProgress(i2iProgressFill, i2iStatus, 0, 'Ready');
+        });
+    </script>
+</body>
+</html>

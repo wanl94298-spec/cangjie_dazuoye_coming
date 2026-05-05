@@ -1,0 +1,11 @@
+{
+  "templateId": "background_repaint",
+  "description": "服务端 buildEditWorkflow：略提高 CFGGuider.cfg + 中等 steps，配合背景类提示词牵引背景区域。",
+  "comfy": {
+    "Flux2Scheduler": { "node": "75:62", "steps": 8 },
+    "CFGGuider": { "node": "75:63", "cfg": 1.22 },
+    "ImageScaleToTotalPixels": { "node": "75:80", "upscale_method": "lanczos", "megapixels": 1 },
+    "SaveImage": { "node": "9", "filename_prefix": "if-bg" }
+  },
+  "overrideFile": "edit_variants.json"
+}

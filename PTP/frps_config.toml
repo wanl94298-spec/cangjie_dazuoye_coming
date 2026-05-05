@@ -1,0 +1,24 @@
+# frps.toml - 公网服务器配置
+# 将此文件上传到公网服务器 140.143.183.163
+
+bindPort = 7000
+
+auth.method = "token"
+auth.token = "yz00190206"
+
+# 允许的端口范围
+allowPorts = [
+  { start = 6000, end = 6100 },
+  { start = 38000, end = 38100 }
+]
+
+# 日志配置
+log.to = "./frps.log"
+log.level = "info"
+log.maxDays = 3
+
+# Web管理界面（可选）
+webServer.addr = "0.0.0.0"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "yz00190206"

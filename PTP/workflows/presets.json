@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "img2img_style",
+      "name": { "en": "Stylized edit", "zh": "风格化修图" },
+      "workflowFile": "img2img_style.json",
+      "note": "POST workflowTemplate=img2img_style；Comfy 侧 megapixels=1、steps=4、nearest-exact。",
+      "workflowTemplate": "img2img_style"
+    },
+    {
+      "id": "image_upscale",
+      "name": { "en": "HD enhance", "zh": "高清增强" },
+      "workflowFile": "image_upscale.json",
+      "note": "POST workflowTemplate=image_upscale；lanczos 缩放 + 更高 megapixels/steps，真上采样后再走 Flux2。",
+      "workflowTemplate": "image_upscale"
+    },
+    {
+      "id": "background_repaint",
+      "name": { "en": "Background repaint", "zh": "背景重绘" },
+      "workflowFile": "background_repaint.json",
+      "note": "POST workflowTemplate=background_repaint；提高 CFG + 中等 steps，配合背景向提示词。",
+      "workflowTemplate": "background_repaint"
+    }
+  ],
+  "editPresets": {
+    "style_portrait": {
+      "name": { "en": "Portrait polish", "zh": "人像精修" },
+      "prompt": {
+        "en": "Professional portrait retouch: even skin tone, natural catchlights, subtle sharpening, keep identity and pose unchanged.",
+        "zh": "人像精修：均匀肤色、自然眼神光、轻微锐化，保持五官与姿态不变。"
+      }
+    },
+    "style_vintage": {
+      "name": { "en": "Vintage film", "zh": "复古胶片" },
+      "prompt": {
+        "en": "Apply a subtle vintage film look: warm faded shadows, fine grain, slightly lowered contrast, keep composition unchanged.",
+        "zh": "复古胶片感：暖调褪色阴影、细腻颗粒、略降对比度，保持构图不变。"
+      }
+    },
+    "style_id": {
+      "name": { "en": "ID photo clean", "zh": "证件照清爽" },
+      "prompt": {
+        "en": "Clean ID-photo style: neutral background if possible, even lighting on face, natural color, no heavy makeup, keep subject unchanged.",
+        "zh": "证件照风格：背景尽量简洁中性、面部光线均匀、色彩自然、淡妆感，主体不变。"
+      }
+    },
+    "upscale_main": {
+      "name": { "en": "HD enhance (prompt)", "zh": "高清增强" },
+      "prompt": {
+        "en": "Enhance clarity and micro-detail: sharper edges, reduce noise, preserve original composition and content, avoid hallucinated new objects.",
+        "zh": "提升清晰度与细节：边缘更锐利、降噪，保持原构图与内容，不要凭空增加物体。"
+      }
+    },
+    "background_main": {
+      "name": { "en": "Background repaint (prompt)", "zh": "背景重绘" },
+      "prompt": {
+        "en": "Replace or repaint ONLY the background; keep the foreground subject pixel-accurate with clean edges; seamless blend.",
+        "zh": "仅替换或重绘背景，前景主体边缘干净、与背景自然融合，不改变主体形状。"
+      }
+    }
+  }
+}

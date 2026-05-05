@@ -1,0 +1,11 @@
+{
+  "templateId": "img2img_style",
+  "description": "默认风格化编辑：generateP2PWorkflow + 低步数 / 1MP / nearest-exact 缩放。",
+  "comfy": {
+    "ImageScaleToTotalPixels": { "node": "75:80", "megapixels": 1, "upscale_method": "nearest-exact" },
+    "Flux2Scheduler": { "node": "75:62", "steps": 4 },
+    "CFGGuider": { "node": "75:63", "cfg": 1 },
+    "SaveImage": { "node": "9", "filename_prefix": "if-style" }
+  },
+  "overrideFile": "edit_variants.json"
+}

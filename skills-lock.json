@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "skills": {
+    "cangjie-arkts-interop": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-arkts-interop/SKILL.md",
+      "computedHash": "6f1d86c7418e99ebcfc7cd9b73d8a91af4fda0b6546c7dd767c7f368ae75f929"
+    },
+    "cangjie-harmonyos-doc-search-maintenance": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-harmonyos-doc-search-maintenance/SKILL.md",
+      "computedHash": "61de54703520aacebf8d481d0483c3b7c659c5c6f8edcf6bde38f6d1da4a96d3"
+    },
+    "cangjie-lang-features": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-lang-features/SKILL.md",
+      "computedHash": "d407df6255c6cc749c2f2d0e88efba7903568b719e5b06af384c7e0b64c0ccfe"
+    },
+    "cangjie-original-docs": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-original-docs/SKILL.md",
+      "computedHash": "de0d62494aa747891c4756dddd6cc74d05d02b7030fd0d4dc5254ece39951edb"
+    },
+    "cangjie-regulations": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-regulations/SKILL.md",
+      "computedHash": "9771b6f4785a7e3131c59342815ca229e2fb6a0011183161759bae00f0fa9da9"
+    },
+    "cangjie-std": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-std/SKILL.md",
+      "computedHash": "f4527ca07ec45b4c697f30ce97ed33d32baab6f31cc24b330e4d3f438d9f8f62"
+    },
+    "cangjie-stdx": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-stdx/SKILL.md",
+      "computedHash": "5be8cf407f1c4a2585e3a41f024474ff101bddfc0c5a7244e14d17655da4e33d"
+    },
+    "cangjie-toolchains": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/cangjie-toolchains/SKILL.md",
+      "computedHash": "aad6be27b8210dc28089101e823c93a836c562b9658d0fca657de140ecf67056"
+    },
+    "harmonyos-app-agent-development": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-app-agent-development/SKILL.md",
+      "computedHash": "3ee321217fb4d737f7a386132fba0ee4149260a8a67e6bb851f70d8d8bedc6b3"
+    },
+    "harmonyos-app-diagnose": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-app-diagnose/SKILL.md",
+      "computedHash": "7d1db2b40e8ebecadd0ae5cd50530b24c828be7622d5517fd3b2e0c7a9a454a1"
+    },
+    "harmonyos-build": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-build/SKILL.md",
+      "computedHash": "56c9a5f14d358df5678c1a2f2277371b411ee4ae2d93305636eaf797f8946ee0"
+    },
+    "harmonyos-evolution": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-evolution/SKILL.md",
+      "computedHash": "cd508f3a0c88fb30e13d8090a0677a1fa758255305bb3a623afd4b9aa28862f0"
+    },
+    "harmonyos-project-init": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-project-init/SKILL.md",
+      "computedHash": "25dd2e0114abe5b32cb6e7273531baaf1912ce9c06a4135d039ad9bb5b46d3d1"
+    },
+    "harmonyos-requirements": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-requirements/SKILL.md",
+      "computedHash": "357695ad42c2af0758625470ab6cc67ff14ac1181299df462f540abdecae7c8c"
+    },
+    "harmonyos-stdx": {
+      "source": "Cangjie-SIG/CangjieSkills",
+      "ref": "cangjie-harmonyos-cbgSR",
+      "sourceType": "git",
+      "skillPath": ".agents/skills/harmonyos-stdx/SKILL.md",
+      "computedHash": "eb269c4591652cd1f627e398a453aae781733d19a874230b2a8d5c23878859c0"
+    }
+  }
+}

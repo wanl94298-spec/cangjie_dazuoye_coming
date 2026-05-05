@@ -1,0 +1,32 @@
+{
+  "ptp2025": {
+    "userId": "beta_user_001",
+    "username": "Beta Tester",
+    "email": "beta@example.com",
+    "plan": "beta",
+    "planName": "Beta User",
+    "credits": 999999,
+    "usedCredits": 0,
+    "createdAt": "2026-03-08T00:00:00.000Z",
+    "expiresAt": null,
+    "creditCost": {
+      "edit": 0,
+      "generate": 0
+    }
+  },
+  "free2026": {
+    "userId": "free_user_001",
+    "username": "free Tester",
+    "email": "free@example.com",
+    "plan": "free",
+    "planName": "free User",
+    "credits": 113,
+    "usedCredits": 91,
+    "createdAt": "2026-03-08T00:00:00.000Z",
+    "expiresAt": null,
+    "creditCost": {
+      "edit": 2,
+      "generate": 1
+    }
+  }
+}

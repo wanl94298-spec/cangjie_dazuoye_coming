@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "ImageForge 图像编辑与生成"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "ImageForge 主界面"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "ImageForge"
+    },
+    {
+      "name": "app_name",
+      "value": "ImageForge"
+    }
+  ]
+}
