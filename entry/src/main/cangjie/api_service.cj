@@ -337,11 +337,64 @@ func apiPost(
     apiRequest(RequestMethod.Post, path, body, onSuccess, onError)
 }
 
+func forgeHttpBytesLookLikeRasterImage(bytes: Array<Byte>): Bool {
+    if (bytes.size >= 8 &&
+        Int64(bytes[0]) == 137 &&
+        Int64(bytes[1]) == 80 &&
+        Int64(bytes[2]) == 78 &&
+        Int64(bytes[3]) == 71) {
+        return true
+    }
+    if (bytes.size >= 12 &&
+        Int64(bytes[0]) == 82 &&
+        Int64(bytes[1]) == 73 &&
+        Int64(bytes[2]) == 70 &&
+        Int64(bytes[3]) == 70 &&
+        Int64(bytes[8]) == 87 &&
+        Int64(bytes[9]) == 69 &&
+        Int64(bytes[10]) == 66 &&
+        Int64(bytes[11]) == 80) {
+        return true
+    }
+    if (bytes.size >= 3 && Int64(bytes[0]) == 255 && Int64(bytes[1]) == 216 && Int64(bytes[2]) == 255) {
+        return true
+    }
+    if (bytes.size >= 6 &&
+        Int64(bytes[0]) == 71 &&
+        Int64(bytes[1]) == 73 &&
+        Int64(bytes[2]) == 70 &&
+        Int64(bytes[3]) == 56) {
+        return true
+    }
+    return false
+}
+
 func httpResultToBytes(data: HttpData): Array<Byte> {
     match (data) {
         case HttpData.ArrayData(bytes) => bytes
+        case HttpData.StringData(s) =>
+            if (s.isEmpty()) {
+                Array<Byte>()
+            } else {
+                let b = s.toArray()
+                if (forgeHttpBytesLookLikeRasterImage(b)) {
+                    b
+                } else {
+                    Array<Byte>()
+                }
+            }
         case _ => Array<Byte>()
     }
+}
+
+/// 去掉粘贴带来的换行、首尾空白与 UTF-8 BOM，避免 URL 非法或请求失败
+func forgeSanitizeHttpImageUrl(raw: String): String {
+    var u = Regex("\r|\n").replaceAll(raw.trimAscii(), "")
+    u = Regex("\\s+").replaceAll(u, " ").trimAscii()
+    if (u.size >= 3 && Int64(u[0]) == 239 && Int64(u[1]) == 187 && Int64(u[2]) == 191) {
+        u = u[3..u.size]
+    }
+    return u
 }
 
 /// 按文件魔数推断 multipart 类型与文件名，与 PTP `multer` 的 `.jpg|.jpeg|.png|.webp` 校验一致
@@ -385,19 +438,23 @@ func apiDownloadImageBytes(
     onSuccess: (Array<Byte>) -> Unit,
     onError: (String) -> Unit
 ): Unit {
-    if (imageUrl.isEmpty()) {
+    let cleanedUrl = forgeSanitizeHttpImageUrl(imageUrl)
+    if (cleanedUrl.isEmpty()) {
         runOnMainThread({ => onError("图片地址为空") })
         return
     }
     try {
         let request = createHttp()
         let headers = HashMap<String, String>()
-        headers.add("Accept", "image/*,*/*")
-        headers.add("User-Agent", "ImageForge-HarmonyOS/1.0")
+        headers.add("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+        headers.add(
+            "User-Agent",
+            "Mozilla/5.0 (Phone; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        // 不显式指定 expectDataType：由响应 Content-Type 决定 image/*、octet-stream 等为二进制，避免与服务器类型不一致时得到空 body
         let options = HttpRequestOptions(
             method: RequestMethod.Get,
             extraData: HttpData.StringData(""),
-            expectDataType: HttpDataType.ArrayBuffer,
             usingCache: false,
             header: headers,
             readTimeout: 120000u32,
@@ -405,7 +462,7 @@ func apiDownloadImageBytes(
         )
         try {
             request.request(
-                imageUrl,
+                cleanedUrl,
                 options,
                 {
                     err, resp =>
@@ -422,8 +479,20 @@ func apiDownloadImageBytes(
                             if (r.responseCode >= 200u32 && r.responseCode < 300u32) {
                                 let bytes = httpResultToBytes(r.result)
                                 if (bytes.size == 0) {
+                                    let ct = match (r.header.get("content-type")) {
+                                        case Some(v) => v
+                                        case None => match (r.header.get("Content-Type")) {
+                                            case Some(v2) => v2
+                                            case None => ""
+                                        }
+                                    }
+                                    let hint = if (ct.isEmpty()) {
+                                        "HTTP ${r.responseCode}，body 为空（可检查链接是否需登录或防盗链）"
+                                    } else {
+                                        "HTTP ${r.responseCode}，Content-Type: ${ct}，无法解析为图片字节"
+                                    }
                                     runOnMainThread({
-                                        => onError("未获取到图片数据")
+                                        => onError(hint)
                                     })
                                 } else {
                                     runOnMainThread({

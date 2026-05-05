@@ -152,7 +152,7 @@ class EditorPage {
     }
 
     func applyPastedImageUrl(): Unit {
-        let u = this.pasteImageUrl.trimAscii()
+        let u = forgeSanitizeHttpImageUrl(this.pasteImageUrl)
         if (u.isEmpty() || (!u.startsWith("http://") && !u.startsWith("https://"))) { this.taskMessage = this.tr("请输入 http/https 图片 URL", "Please enter an http/https image URL"); this.isTaskError = true; return }
         this.sourceImageUrl = u; this.hasImage = true; this.taskMessage = ""; this.isTaskError = false
     }
