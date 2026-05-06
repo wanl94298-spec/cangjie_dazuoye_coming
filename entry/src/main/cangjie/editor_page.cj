@@ -49,16 +49,16 @@ class EditorPage {
                 }.width(100.percent).padding(left: 16, right: 16, top: this.scrollPadTopVp, bottom: this.bottomBarOverlapVp)
             }.width(100.percent).height(100.percent).scrollBar(BarState.Off).backgroundColor(0xFFF0F3FA)
             Row {
-                this.modeButton(this.tr("编辑", "Edit"), "edit")
+                this.modeButton("edit")
                 Blank().width(10)
-                this.modeButton(this.tr("生成", "Generate"), "generate")
+                this.modeButton("generate")
             }.width(100.percent).padding(left: this.barSideInsetVp, right: this.barSideInsetVp, top: this.modeBarTopVp).zIndex(16)
         }.width(100.percent).height(100.percent).backgroundColor(0xFFF0F3FA)
     }
 
     @Builder
-    func modeButton(label: String, mode: String) {
-        Button(label).layoutWeight(1).height(44).fontSize(14).fontColor(if (this.editorMainMode == mode) { 0xFF007AFF } else { 0xFF63636B }).backgroundColor(if (this.editorMainMode == mode) { 0xFFFFFFFF } else { 0xE6FFFFFF }).borderRadius(14).onClick({ _: ClickEvent => this.onEditorMainModeChange(mode) })
+    func modeButton(mode: String) {
+        Button(if (mode == "edit") { this.tr("编辑", "Edit") } else { this.tr("生成", "Generate") }).layoutWeight(1).height(44).fontSize(14).fontColor(if (this.editorMainMode == mode) { 0xFF007AFF } else { 0xFF63636B }).backgroundColor(if (this.editorMainMode == mode) { 0xFFFFFFFF } else { 0xE6FFFFFF }).borderRadius(14).onClick({ _: ClickEvent => this.onEditorMainModeChange(mode) })
     }
 
     @Builder
@@ -69,7 +69,7 @@ class EditorPage {
     @Builder
     func buildEditPage() {
         Column {
-            Row { this.workflowButton(this.tr("风格", "Style"), "style"); this.workflowButton(this.tr("高清", "HD"), "upscale"); this.workflowButton(this.tr("背景", "BG"), "background") }.width(100.percent).margin(top: 12, bottom: 12)
+            Row { this.workflowButton("style"); this.workflowButton("upscale"); this.workflowButton("background") }.width(100.percent).margin(top: 12, bottom: 12)
             if (!this.hasImage) {
                 Button(this.tr("加载演示图片", "Load demo image")).height(42).width(100.percent).fontColor(0xFF007AFF).backgroundColor(0xFFFFFFFF).borderRadius(12).onClick({ _: ClickEvent => this.loadDemoEditImage() })
                 TextInput(placeholder: this.tr("粘贴图片 URL", "Paste image URL"), text: "${this.pasteImageUrl}").height(42).width(100.percent).margin(top: 10).backgroundColor(0xFFFFFFFF).borderRadius(12).padding(left: 12, right: 12).onChange({ v: String => this.pasteImageUrl = v })
@@ -86,8 +86,8 @@ class EditorPage {
     }
 
     @Builder
-    func workflowButton(label: String, mode: String) {
-        Button(label).layoutWeight(1).height(36).margin(right: 8).fontSize(13).fontColor(if (this.editorEditWorkflow == mode) { 0xFFFFFFFF } else { 0xFF007AFF }).backgroundColor(if (this.editorEditWorkflow == mode) { 0xFF007AFF } else { 0xFFFFFFFF }).borderRadius(16).onClick({ _: ClickEvent => this.onEditorEditWorkflowChange(mode) })
+    func workflowButton(mode: String) {
+        Button(if (mode == "style") { this.tr("风格", "Style") } else if (mode == "upscale") { this.tr("高清", "HD") } else { this.tr("背景", "BG") }).layoutWeight(1).height(36).margin(right: 8).fontSize(13).fontColor(if (this.editorEditWorkflow == mode) { 0xFFFFFFFF } else { 0xFF007AFF }).backgroundColor(if (this.editorEditWorkflow == mode) { 0xFF007AFF } else { 0xFFFFFFFF }).borderRadius(16).onClick({ _: ClickEvent => this.onEditorEditWorkflowChange(mode) })
     }
 
     @Builder
@@ -175,7 +175,7 @@ class EditorPage {
                     result: ImageTaskResult =>
                         this.progress = 100; this.isProcessing = false; this.showResult = true; this.resultRemoteUrl = this.primaryResultRemote(result); this.resultImageUrl = this.resultRemoteUrl; this.taskMessage = this.tr("编辑完成", "Edit complete"); this.isTaskError = false; this.onCreditsChange(result.creditsRemaining); imageForgeHistoryAppendRecord(this.historyTitle(), fullPrompt, this.resultRemoteUrl)
                 }, { message: String => this.fail(message) })
-        }, { message: String => this.fail(message) })
+        }, { message: String => this.fail(message) }, proxyAccessCode: this.accessCode)
     }
 
     func handleGenerate() {

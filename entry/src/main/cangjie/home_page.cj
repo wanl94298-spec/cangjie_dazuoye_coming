@@ -69,22 +69,22 @@ class HomePage {
     func buildFeatureCards() {
         Column {
             Row {
-                this.buildGlassCard(this.tr("风格化修图", "Stylized edit"), this.tr("自然语言编辑 · Flux2", "Natural language edit · Flux2"), {
+                this.buildGlassCard("glass_style", {
                     => this.onOpenEditor("edit", "style")
                 })
                 Blank().width(12)
-                this.buildGlassCard(this.tr("高清增强", "HD enhance"), this.tr("lanczos · 更高清细节", "lanczos · more details"), {
+                this.buildGlassCard("glass_upscale", {
                     => this.onOpenEditor("edit", "upscale")
                 })
             }
             .width(100.percent)
 
             Row {
-                this.buildGlassCard(this.tr("背景重绘", "Background repaint"), this.tr("CFG 与步数适配图景", "CFG and steps tuned for scenes"), {
+                this.buildGlassCard("glass_background", {
                     => this.onOpenEditor("edit", "background")
                 })
                 Blank().width(12)
-                this.buildGlassCard(this.tr("文生图", "Text to image"), this.tr("文字描述生成全新图像", "Generate new images from text"), {
+                this.buildGlassCard("glass_generate", {
                     => this.onOpenEditor("generate", "style")
                 })
             }
@@ -95,17 +95,37 @@ class HomePage {
         .margin(bottom: 28)
     }
 
-    /// 两列等宽、等高卡片
+    /// 两列等宽、等高卡片（文案在内部 tr，保证与 currentLang 同步）
     @Builder
-    func buildGlassCard(title: String, desc: String, onTap: () -> Unit) {
+    func buildGlassCard(kind: String, onTap: () -> Unit) {
         Column {
-            Text(title)
+            Text(
+                if (kind == "glass_style") {
+                    this.tr("风格化修图", "Stylized edit")
+                } else if (kind == "glass_upscale") {
+                    this.tr("高清增强", "HD enhance")
+                } else if (kind == "glass_background") {
+                    this.tr("背景重绘", "Background repaint")
+                } else {
+                    this.tr("文生图", "Text to image")
+                }
+            )
                 .fontSize(16)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(0xFF1A2430)
                 .margin(bottom: 8)
 
-            Text(desc)
+            Text(
+                if (kind == "glass_style") {
+                    this.tr("自然语言编辑 · Flux2", "Natural language edit · Flux2")
+                } else if (kind == "glass_upscale") {
+                    this.tr("lanczos · 更高清细节", "lanczos · more details")
+                } else if (kind == "glass_background") {
+                    this.tr("CFG 与步数适配图景", "CFG and steps tuned for scenes")
+                } else {
+                    this.tr("文字描述生成全新图像", "Generate new images from text")
+                }
+            )
                 .fontSize(12)
                 .fontColor(0xFF6B7680)
                 .maxLines(3)

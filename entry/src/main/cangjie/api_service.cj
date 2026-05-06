@@ -397,6 +397,33 @@ func forgeSanitizeHttpImageUrl(raw: String): String {
     return u
 }
 
+/// `https://host[:port]/...` → `https://host[:port]`，用于 Origin/Referer，减轻防盗链 403
+func forgeHttpOriginForHeaders(url: String): String {
+    let t = url.trimAscii()
+    let start: Int64 = if (t.startsWith("https://")) {
+        8
+    } else if (t.startsWith("http://")) {
+        7
+    } else {
+        -1
+    }
+    if (start < 0) {
+        return ""
+    }
+    var i = start
+    while (i < t.size) {
+        let c = Int32(t[i])
+        if (c == 47 || c == 63 || c == 35) {
+            break
+        }
+        i += 1
+    }
+    if (i == start) {
+        return ""
+    }
+    return t[0..i]
+}
+
 /// 按文件魔数推断 multipart 类型与文件名，与 PTP `multer` 的 `.jpg|.jpeg|.png|.webp` 校验一致
 class ForgeEditMultipartMeta {
     var mime: String = "image/jpeg"
@@ -433,10 +460,74 @@ func forgeInferEditMultipartMeta(bytes: Array<Byte>): ForgeEditMultipartMeta {
     return ForgeEditMultipartMeta("image/jpeg", "edit.jpg")
 }
 
-func apiDownloadImageBytes(
+/// 直连 403 时回退：POST BFF `/api/fetch-image`，body `{"accessCode","url"}`，成功体为图片字节
+func apiFetchImageBytesViaProxy(
+    accessCode: String,
     imageUrl: String,
     onSuccess: (Array<Byte>) -> Unit,
     onError: (String) -> Unit
+): Unit {
+    if (imageUrl.isEmpty() || accessCode.trimAscii().isEmpty()) {
+        runOnMainThread({ => onError("代理参数无效") })
+        return
+    }
+    try {
+        let request = createHttp()
+        let headers = HashMap<String, String>()
+        headers.add("Content-Type", "application/json")
+        let body =
+            "{" + "\"accessCode\":\"${jsonEscape(accessCode)}\"," + "\"url\":\"${jsonEscape(imageUrl)}\"" + "}"
+        let options = HttpRequestOptions(
+            method: RequestMethod.Post,
+            extraData: HttpData.StringData(body),
+            usingCache: false,
+            header: headers,
+            readTimeout: 120000u32,
+            connectTimeout: 25000u32
+        )
+        try {
+            request.request(
+                apiUrl("/api/fetch-image"),
+                options,
+                {
+                    err, resp =>
+                        if (let Some(e) <- err) {
+                            runOnMainThread({ => onError(e.message) })
+                            safeDestroyHttpRequest(request)
+                            return
+                        }
+                        if (let Some(r) <- resp) {
+                            if (r.responseCode >= 200u32 && r.responseCode < 300u32) {
+                                let bytes = httpResultToBytes(r.result)
+                                if (bytes.size == 0) {
+                                    runOnMainThread({ => onError(apiJsonString(httpDataToString(r.result), "error") ?? "代理返回空数据") })
+                                } else {
+                                    runOnMainThread({ => onSuccess(bytes) })
+                                }
+                            } else {
+                                let msg = apiJsonString(httpDataToString(r.result), "error") ?? "HTTP ${r.responseCode}"
+                                runOnMainThread({ => onError(msg) })
+                            }
+                        } else {
+                            runOnMainThread({ => onError("proxy: no response") })
+                        }
+                        safeDestroyHttpRequest(request)
+                }
+            )
+        } catch (e: BusinessException) {
+            safeDestroyHttpRequest(request)
+            runOnMainThread({ => onError(e.message) })
+        }
+    } catch (e: BusinessException) {
+        runOnMainThread({ => onError(e.message) })
+    }
+}
+
+func apiDownloadImageBytes(
+    imageUrl: String,
+    onSuccess: (Array<Byte>) -> Unit,
+    onError: (String) -> Unit,
+    proxyAccessCode!: String = ""
 ): Unit {
     let cleanedUrl = forgeSanitizeHttpImageUrl(imageUrl)
     if (cleanedUrl.isEmpty()) {
@@ -451,6 +542,11 @@ func apiDownloadImageBytes(
             "User-Agent",
             "Mozilla/5.0 (Phone; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
+        let origin = forgeHttpOriginForHeaders(cleanedUrl)
+        if (!origin.isEmpty()) {
+            headers.add("Origin", origin)
+            headers.add("Referer", origin + "/")
+        }
         // 不显式指定 expectDataType：由响应 Content-Type 决定 image/*、octet-stream 等为二进制，避免与服务器类型不一致时得到空 body
         let options = HttpRequestOptions(
             method: RequestMethod.Get,
@@ -502,9 +598,30 @@ func apiDownloadImageBytes(
                             } else {
                                 let responseBody = httpDataToString(r.result)
                                 let message = apiJsonString(responseBody, "error") ?? "HTTP ${r.responseCode}"
-                                runOnMainThread({
-                                    => onError(message)
-                                })
+                                let code = proxyAccessCode.trimAscii()
+                                if (r.responseCode == 403u32 && !code.isEmpty()) {
+                                    apiFetchImageBytesViaProxy(
+                                        code,
+                                        cleanedUrl,
+                                        { bytes: Array<Byte> => runOnMainThread({ => onSuccess(bytes) }) },
+                                        {
+                                            pe: String =>
+                                                let hint404 =
+                                                    if (pe.contains("404")) {
+                                                        "；未部署 POST /api/fetch-image 时代理会 404"
+                                                    } else {
+                                                        ""
+                                                    }
+                                                runOnMainThread({
+                                                    => onError("HTTP 403，代理失败：${pe}（${message}）${hint404}")
+                                                })
+                                        }
+                                    )
+                                } else {
+                                    runOnMainThread({
+                                        => onError(message)
+                                    })
+                                }
                             }
                         } else {
                             runOnMainThread({
@@ -529,7 +646,7 @@ func apiDownloadImageBytes(
     }
 }
 
-/// POST /api/edit锛宮ultipart/form-data锛堝瓧娈典笌 PTP server.js 涓€鑷达級
+/// POST /api/edit
 func apiEditImage(
     accessCode: String,
     prompt: String,
@@ -539,106 +656,136 @@ func apiEditImage(
     onError: (String) -> Unit
 ): Unit {
     if (imageBytes.size == 0) {
-        runOnMainThread({ => onError("图片数据为空") })
+        runOnMainThread({ => onError("Image data is empty") })
         return
     }
-    try {
-        let request = createHttp()
-        let headers = HashMap<String, String>()
-        headers.add("Accept", "application/json")
-        let partMeta = forgeInferEditMultipartMeta(imageBytes)
-        let formImage = MultiFormData(
-            "image",
-            partMeta.mime,
-            remoteFileName: partMeta.remoteFileName,
-            data: HttpData.ArrayData(imageBytes)
-        )
-        let formPrompt = MultiFormData(
-            "prompt",
-            "text/plain",
-            remoteFileName: "",
-            data: HttpData.StringData(prompt)
-        )
-        let formCode = MultiFormData(
-            "accessCode",
-            "text/plain",
-            remoteFileName: "",
-            data: HttpData.StringData(accessCode)
-        )
-        let formTpl = MultiFormData(
-            "workflowTemplate",
-            "text/plain",
-            remoteFileName: "",
-            data: HttpData.StringData(workflowTemplate)
-        )
-        let multiParts: Array<MultiFormData> = [formCode, formPrompt, formTpl, formImage]
-        let options = HttpRequestOptions(
-            method: RequestMethod.Post,
-            extraData: HttpData.StringData(""),
-            expectDataType: HttpDataType.StringValue,
-            usingCache: false,
-            header: headers,
-            readTimeout: 180000u32,
-            connectTimeout: 20000u32,
-            multiFormDataList: multiParts
-        )
-        try {
-            request.request(
-                apiUrl("/api/edit"),
-                options,
-                {
-                    err, resp =>
-                        if (let Some(e) <- err) {
-                            let message = e.message
-                            runOnMainThread({
-                                => onError(message)
-                            })
-                            safeDestroyHttpRequest(request)
-                            return
-                        }
 
-                        if (let Some(r) <- resp) {
-                            let responseBody = httpDataToString(r.result)
-                            if (r.responseCode >= 200u32 && r.responseCode < 300u32) {
-                                if (apiJsonBool(responseBody, "success") ?? false) {
-                                    let parsed = parseImageTaskResult(responseBody)
-                                    runOnMainThread({
-                                        => onSuccess(parsed)
-                                    })
-                                } else {
-                                    let message = apiJsonString(responseBody, "error") ?? "编辑失败"
+    let uploadPathOpt = forgeTrySaveImageBytes(imageBytes, "ImageForge_edit_upload.jpg")
+    match (uploadPathOpt) {
+        case None =>
+            runOnMainThread({ => onError("Failed to save upload image") })
+            return
+
+        case Some(uploadPath) =>
+            try {
+                let request = createHttp()
+                let headers = HashMap<String, String>()
+                headers.add("Accept", "application/json")
+                headers.add("Content-Type", "multipart/form-data")
+
+                let formImage = MultiFormData(
+                    "image",
+                    "image/jpeg",
+                    remoteFileName: "edit.jpg",
+                    filePath: uploadPath
+                )
+
+                let formPrompt = MultiFormData(
+                    "prompt",
+                    "text/plain",
+                    remoteFileName: "",
+                    data: HttpData.StringData(prompt)
+                )
+
+                let formCode = MultiFormData(
+                    "accessCode",
+                    "text/plain",
+                    remoteFileName: "",
+                    data: HttpData.StringData(accessCode)
+                )
+
+                let formTpl = MultiFormData(
+                    "workflowTemplate",
+                    "text/plain",
+                    remoteFileName: "",
+                    data: HttpData.StringData(workflowTemplate)
+                )
+
+                let multiParts: Array<MultiFormData> = [formCode, formPrompt, formTpl, formImage]
+
+                let options = HttpRequestOptions(
+                    method: RequestMethod.Post,
+                    extraData: HttpData.StringData(""),
+                    expectDataType: HttpDataType.StringValue,
+                    usingCache: false,
+                    header: headers,
+                    readTimeout: 180000u32,
+                    connectTimeout: 20000u32,
+                    multiFormDataList: multiParts
+                )
+
+                try {
+                    request.request(
+                        apiUrl("/api/edit"),
+                        options,
+                        {
+                            err, resp =>
+                                if (let Some(e) <- err) {
+                                    let message = e.message
                                     runOnMainThread({
                                         => onError(message)
                                     })
+                                    safeDestroyHttpRequest(request)
+                                    return
                                 }
-                            } else {
-                                let message = apiJsonString(responseBody, "error") ?? "HTTP ${r.responseCode}"
-                                runOnMainThread({
-                                    => onError(message)
-                                })
-                            }
-                        } else {
-                            runOnMainThread({
-                                => onError("Server returned no response")
-                            })
+
+                                if (let Some(r) <- resp) {
+                                    let responseBody = httpDataToString(r.result)
+                                    if (r.responseCode >= 200u32 && r.responseCode < 300u32) {
+                                        if (apiJsonBool(responseBody, "success") ?? false) {
+                                            let parsed = parseImageTaskResult(responseBody)
+                                            runOnMainThread({
+                                                => onSuccess(parsed)
+                                            })
+                                        } else {
+                                            let base = apiJsonString(responseBody, "error") ?? "Edit failed"
+                                            let detail = apiJsonString(responseBody, "details") ?? ""
+                                            let message = if (!detail.isEmpty()) {
+                                                base + ": " + detail
+                                            } else {
+                                                base
+                                            }
+                                            runOnMainThread({
+                                                => onError(message)
+                                            })
+                                        }
+                                    } else {
+                                        let base = apiJsonString(responseBody, "error") ?? "HTTP ${r.responseCode}"
+                                        let detail = apiJsonString(responseBody, "details") ?? ""
+                                        let message = if (!detail.isEmpty()) {
+                                            base + ": " + detail
+                                        } else {
+                                            base
+                                        }
+                                        runOnMainThread({
+                                            => onError(message)
+                                        })
+                                    }
+                                } else {
+                                    runOnMainThread({
+                                        => onError("Server returned no response")
+                                    })
+                                }
+
+                                safeDestroyHttpRequest(request)
                         }
-                        safeDestroyHttpRequest(request)
+                    )
+                } catch (e: BusinessException) {
+                    safeDestroyHttpRequest(request)
+                    let message = e.message
+                    runOnMainThread({
+                        => onError(message)
+                    })
                 }
-            )
-        } catch (e: BusinessException) {
-            safeDestroyHttpRequest(request)
-            let message = e.message
-            runOnMainThread({
-                => onError(message)
-            })
-        }
-    } catch (e: BusinessException) {
-        let message = e.message
-        runOnMainThread({
-            => onError(message)
-        })
+            } catch (e: BusinessException) {
+                let message = e.message
+                runOnMainThread({
+                    => onError(message)
+                })
+            }
     }
 }
+
 
 func apiRequest(
     method: RequestMethod,
